@@ -84,7 +84,6 @@ tr:last-child td{border-bottom:none;}tr:hover td{background:#fafafa;}
 .tg{background:var(--green-bg);color:var(--green);}.tb{background:var(--blue-bg);color:var(--blue);}.to{background:var(--orange-bg);color:var(--orange);}
 .crow{display:grid;grid-template-columns:1fr auto auto auto auto;gap:20px;align-items:center;padding:16px 0;border-bottom:1px solid #f2f2f2;}
 .crow:last-child{border:none;}
-.crhdr{padding:8px 0 4px;border-bottom:1.5px solid var(--border) !important;}
 .crn{font-size:14px;font-weight:600;}.crl{font-size:11px;color:var(--muted);margin-top:2px;}
 .crr{font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--green);}
 .crs{font-size:11px;color:var(--muted);}
@@ -445,19 +444,12 @@ function badgeCls(s) {
 
 function renderCreators(list) {
   if (!list.length) return '<div class="empty">No converted creators yet this month</div>';
-  const header = `<div class="crow crhdr">
-    <div style="font-size:9px;text-transform:uppercase;letter-spacing:2px;color:var(--muted);font-weight:600;">Creator</div>
-    <div style="font-size:9px;text-transform:uppercase;letter-spacing:2px;color:var(--muted);font-weight:600;">Retainer</div>
-    <div style="font-size:9px;text-transform:uppercase;letter-spacing:2px;color:var(--muted);font-weight:600;">Health</div>
-    <div style="font-size:9px;text-transform:uppercase;letter-spacing:2px;color:var(--muted);font-weight:600;">GMV</div>
-    <div style="font-size:9px;text-transform:uppercase;letter-spacing:2px;color:var(--muted);font-weight:600;">Status</div>
-  </div>`;
-  return header + list.map(c =>
+  return list.map(c =>
     `<div class="crow">
       <div><div class="crn">@${c.name}</div><div class="crl">${c.platform||'Creator'}</div></div>
       <div class="crr">${c.retainer||'—'}</div>
-      <div class="crs">${c.health||'—'}</div>
-      <div class="crs">${c.gmv||'—'}</div>
+      <div class="crs">${c.health||''}</div>
+      <div class="crs">${c.gmv||''}</div>
       <div><span class="badge ${badgeCls(c.status)}">${c.status||'—'}</span></div>
     </div>`
   ).join('');
@@ -470,19 +462,12 @@ function renderAllCreators(m) {
     (d[m].creators||[]).forEach(c => all.push({...c, who:u.name, col:u.color}));
   });
   if (!all.length) return '<div class="empty">No converted creators this month</div>';
-  const header = `<div class="crow crhdr">
-    <div style="font-size:9px;text-transform:uppercase;letter-spacing:2px;color:var(--muted);font-weight:600;">Creator</div>
-    <div style="font-size:9px;text-transform:uppercase;letter-spacing:2px;color:var(--muted);font-weight:600;">Retainer</div>
-    <div style="font-size:9px;text-transform:uppercase;letter-spacing:2px;color:var(--muted);font-weight:600;">Health</div>
-    <div style="font-size:9px;text-transform:uppercase;letter-spacing:2px;color:var(--muted);font-weight:600;">GMV</div>
-    <div style="font-size:9px;text-transform:uppercase;letter-spacing:2px;color:var(--muted);font-weight:600;">Status</div>
-  </div>`;
-  return header + all.map(c =>
+  return all.map(c =>
     `<div class="crow">
       <div><div class="crn">@${c.name}</div><div class="crl" style="color:${c.col}">${c.who} · ${c.platform||''}</div></div>
       <div class="crr">${c.retainer||'—'}</div>
-      <div class="crs">${c.health||'—'}</div>
-      <div class="crs">${c.gmv||'—'}</div>
+      <div class="crs">${c.health||''}</div>
+      <div class="crs">${c.gmv||''}</div>
       <div><span class="badge ${badgeCls(c.status)}">${c.status||'—'}</span></div>
     </div>`
   ).join('');
