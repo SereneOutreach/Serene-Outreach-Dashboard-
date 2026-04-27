@@ -84,6 +84,8 @@ tr:last-child td{border-bottom:none;}tr:hover td{background:#fafafa;}
 .tg{background:var(--green-bg);color:var(--green);}.tb{background:var(--blue-bg);color:var(--blue);}.to{background:var(--orange-bg);color:var(--orange);}
 .crow{display:grid;grid-template-columns:1fr auto auto auto auto;gap:20px;align-items:center;padding:16px 0;border-bottom:1px solid #f2f2f2;}
 .crow:last-child{border:none;}
+.crhdr{padding:6px 0;border-bottom:1.5px solid var(--border) !important;}
+.crhdr div{font-size:9px;text-transform:uppercase;letter-spacing:2px;color:var(--muted);font-weight:600;}
 .crn{font-size:14px;font-weight:600;}.crl{font-size:11px;color:var(--muted);margin-top:2px;}
 .crr{font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--green);}
 .crs{font-size:11px;color:var(--muted);}
@@ -146,8 +148,8 @@ tr:last-child td{border-bottom:none;}tr:hover td{background:#fafafa;}
 <script>
 const TEAM = [
   { id:'tinus',    name:'Tinus',    initials:'TN', color:'#00b341', bg:'#e6f7ed', role:'Manager',  pin:'1234', admin:true,  api:null },
-  { id:'georgina', name:'Georgina', initials:'GE', color:'#e91e8c', bg:'#fde8f4', role:'Outreach', pin:'2222', admin:false, api:'https://script.google.com/macros/s/AKfycbzVjrkKaJ_XRPnwepbi5nDf6OzSlj3zmE-kj8Yx9nDTnvcenbUuSLAEEyHZeuWxtA0A/exec' },
-  { id:'jaune',    name:'Jaune',    initials:'JN', color:'#2979ff', bg:'#e8f0ff', role:'Outreach', pin:'3333', admin:false, api:'https://script.google.com/macros/s/AKfycby9hfYsYNIt2BSQ9FU_dOviaNgNgbU74H7WuoG3n_DLm3DiC6GiXnWUnJ6wvsY51QgU/exec' }
+  { id:'georgina', name:'Georgina', initials:'GE', color:'#e91e8c', bg:'#fde8f4', role:'Outreach', pin:'2222', admin:false, api:'https://script.google.com/macros/s/AKfycbxM7vi5f3YIHh7WxzMH_oBqxcg1EdS1gL_gkxYkr48_aTIKp4ZpfVbX80O_twtrQH5H/exec' },
+  { id:'jaune',    name:'Jaune',    initials:'JN', color:'#2979ff', bg:'#e8f0ff', role:'Outreach', pin:'3333', admin:false, api:'https://script.google.com/macros/s/AKfycbyuj6-F2E_5qEPktpwy7TvyW41QnifWBP4-F-ePS-cf07VLlAsZpDGmS8xjaZNIuh5h/exec' }
 ];
 const CH_COLORS=['#0a0a0a','#2979ff','#7c4dff','#e65100','#e91e8c','#00b341','#f9a825'];
 const MO=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
@@ -258,7 +260,7 @@ function renderDash(uid){
       <div class="tscroll"><table><thead><tr><th>Week</th><th>Date Range</th><th>DMs Sent</th><th>Responses</th><th>Converted</th><th>Resp Rate</th><th>Conv Rate</th></tr></thead>
       <tbody>${renderWeeks(d[m].weekTotals||[])}</tbody></table></div>
     </div>
-    <div class="card"><div class="ctitle">Converted Creators</div>${renderCreators(d[m].creators||[])}</div>
+    <div class="card"><div class="ctitle">Converted Creators</div>${renderCreators(d[m].creators||[],d[m].creatorLabels||[])}</div>
   </div>`;
   makeChart('ch_'+uid,dy);
 }
@@ -327,14 +329,20 @@ function renderWeeks(wt){
   return wt.map((w,i)=>{const rr=w.sent>0?((w.resp/w.sent)*100).toFixed(1):'0.0',cr=w.resp>0?((w.conv/w.resp)*100).toFixed(1):'0.0';return`<tr><td style="font-weight:700">Week ${i+1}</td><td style="color:var(--muted);font-size:12px">${w.dateRange||''}</td><td><span class="tag tg">${w.sent.toLocaleString()}</span></td><td><span class="tag tb">${w.resp}</span></td><td><span class="tag to">${w.conv}</span></td><td style="color:var(--muted)">${rr}%</td><td style="color:var(--muted)">${cr}%</td></tr>`;}).join('');
 }
 function badgeCls(s){if(!s)return'bs';s=s.toUpperCase();if(s.includes('ONBOARD')||s.includes('JOINED'))return'bo';if(s.includes('WAIT'))return'bw';if(s.includes('SAMPLE'))return'bsp';if(s.includes('START')||s.includes('REC'))return'bst';return'bs';}
-function renderCreators(list){
+function renderCreators(list,labels){
   if(!list.length)return'<div class="empty">No converted creators yet this month</div>';
-  return list.map(c=>`<div class="crow"><div><div class="crn">@${c.name}</div><div class="crl">${c.platform||'Creator'}</div></div><div class="crr">${c.retainer||'—'}</div><div class="crs">${c.health||''}</div><div class="crs">${c.gmv||''}</div><div><span class="badge ${badgeCls(c.status)}">${c.status||'—'}</span></div></div>`).join('');
+  const lb=labels&&labels.length?labels:['Handle','Platform','Retainer','Health','GMV','Status','Notes'];
+  const hdr=`<div class="crow crhdr"><div>${lb[0]||'Handle'}</div><div>${lb[2]||'Retainer'}</div><div>${lb[3]||'Health'}</div><div>${lb[4]||'GMV'}</div><div>${lb[5]||'Status'}</div></div>`;
+  return hdr+list.map(c=>`<div class="crow"><div><div class="crn">@${c.name}</div><div class="crl">${c.platform||'Creator'}</div></div><div class="crr">${c.retainer||'—'}</div><div class="crs">${c.health||''}</div><div class="crs">${c.gmv||''}</div><div><span class="badge ${badgeCls(c.status)}">${c.status||'—'}</span></div></div>`).join('');
 }
 function renderAllCreators(m){
   let all=[];TEAM.forEach(u=>{const d=DATA[u.id];if(!d||!d[m])return;(d[m].creators||[]).forEach(c=>all.push({...c,who:u.name,col:u.color}));});
   if(!all.length)return'<div class="empty">No converted creators this month</div>';
-  return all.map(c=>`<div class="crow"><div><div class="crn">@${c.name}</div><div class="crl" style="color:${c.col}">${c.who} · ${c.platform||''}</div></div><div class="crr">${c.retainer||'—'}</div><div class="crs">${c.health||''}</div><div class="crs">${c.gmv||''}</div><div><span class="badge ${badgeCls(c.status)}">${c.status||'—'}</span></div></div>`).join('');
+  // Get labels from first user who has data this month
+  var lb=['Handle','Platform','Retainer','Health','GMV','Status','Notes'];
+  TEAM.forEach(function(u){const d=DATA[u.id];if(d&&d[m]&&d[m].creatorLabels&&d[m].creatorLabels.length)lb=d[m].creatorLabels;});
+  const hdr=`<div class="crow crhdr"><div>${lb[0]||'Handle'}</div><div>${lb[2]||'Retainer'}</div><div>${lb[3]||'Health'}</div><div>${lb[4]||'GMV'}</div><div>${lb[5]||'Status'}</div></div>`;
+  return hdr+all.map(c=>`<div class="crow"><div><div class="crn">@${c.name}</div><div class="crl" style="color:${c.col}">${c.who} · ${c.platform||''}</div></div><div class="crr">${c.retainer||'—'}</div><div class="crs">${c.health||''}</div><div class="crs">${c.gmv||''}</div><div><span class="badge ${badgeCls(c.status)}">${c.status||'—'}</span></div></div>`).join('');
 }
 function makeChart(id,d){
   const el=document.getElementById(id);if(!el)return;
