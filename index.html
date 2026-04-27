@@ -94,7 +94,7 @@ tr:last-child td{border-bottom:none;}tr:hover td{background:#fafafa;}
 .bsp{background:var(--blue-bg);color:var(--blue);}.bst{background:var(--purple-bg);color:var(--purple);}
 .bs{background:var(--orange-bg);color:var(--orange);}
 .empty{text-align:center;padding:48px;color:var(--muted);font-size:13px;}
-.tcards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:28px;}
+.tcards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-bottom:28px;}
 .tcard{border:1.5px solid var(--border);border-radius:16px;background:#fff;cursor:pointer;transition:.2s;overflow:hidden;}
 .tcard:hover{border-color:#bbb;transform:translateY(-3px);box-shadow:0 6px 28px rgba(0,0,0,.08);}
 .tbar{height:4px;}.tcbody{padding:22px;}
@@ -270,7 +270,7 @@ function renderTotal(){
   if(!allMonths.length){document.getElementById('pc').innerHTML=`<div class="page"><div class="dh"><div><div class="dtitle">Total</div><div class="dsub">Loading team data...</div></div></div><div class="loading-wrap"><div class="spinner"></div><div class="loading-txt">Fetching live data from all sheets</div></div></div>`;return;}
   if(!CM.total||!allMonths.includes(CM.total))CM.total=allMonths[allMonths.length-1];
   const m=CM.total,comb=combineAll(m),dy=combineDaily(m);
-  const tcards=TEAM.map(u=>{
+  const tcards=TEAM.filter(u=>u.api).map(u=>{
     const d=DATA[u.id];
     if(!d||!d[m])return`<div class="tcard" onclick="showTab('${u.id}')"><div class="tbar" style="background:${u.color}"></div><div class="tcbody"><div class="tchead"><div class="tcav" style="background:${u.bg};color:${u.color}">${u.initials}</div><div><div class="tcn">${u.name}</div><div class="tcr">${u.role}</div></div></div><div class="nodata">No data yet for ${m}</div></div></div>`;
     const t=calcTotals(d,m);
@@ -288,7 +288,7 @@ function renderTotal(){
     </div>
     <div class="sdiv">Team Overview</div>
     <div class="tcards">${tcards}</div>
-    <div class="mgrid" style="margin-bottom:16px">
+    <div class="mgrid" style="margin-bottom:16px;grid-template-columns:1fr 360px;">
       <div class="card"><div class="ctitle">Combined Daily Activity</div><div class="cbox"><canvas id="ch_total"></canvas></div></div>
       <div class="card"><div class="ctitle">All Channels Combined</div>${renderChannels(comb.ch)}</div>
     </div>
