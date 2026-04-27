@@ -84,8 +84,6 @@ tr:last-child td{border-bottom:none;}tr:hover td{background:#fafafa;}
 .tg{background:var(--green-bg);color:var(--green);}.tb{background:var(--blue-bg);color:var(--blue);}.to{background:var(--orange-bg);color:var(--orange);}
 .crow{display:grid;grid-template-columns:1fr auto auto auto auto;gap:20px;align-items:center;padding:16px 0;border-bottom:1px solid #f2f2f2;}
 .crow:last-child{border:none;}
-.crhdr{padding:8px 0 4px;border-bottom:1.5px solid var(--border) !important;}
-.crhdr div{font-size:9px;text-transform:uppercase;letter-spacing:2px;color:var(--muted);font-weight:600;}
 .crn{font-size:14px;font-weight:600;}.crl{font-size:11px;color:var(--muted);margin-top:2px;}
 .crr{font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--green);}
 .crs{font-size:11px;color:var(--muted);}
@@ -146,157 +144,110 @@ tr:last-child td{border-bottom:none;}tr:hover td{background:#fafafa;}
 </div>
 
 <script>
-// ── Team config ───────────────────────────────────────────────────────────────
-// admin:true  → sees Total view + all team tabs
-// admin:false → sees only their own data, no other tabs
 const TEAM = [
-  { id:'tinus',    name:'Tinus',    initials:'TN', color:'#00b341', bg:'#e6f7ed', role:'Manager', pin:'1234', admin:true,  api:null },
-  { id:'georgina', name:'Georgina', initials:'GE', color:'#e91e8c', bg:'#fde8f4', role:'Outreach', pin:'2222', admin:false, api:'https://script.google.com/macros/s/AKfycbyzXgfCB2Xva1l_jVa0px_UO-sr_1dAm_j_NKeAWblUI8DV4sIp_JV5Eu2XnEkZC3uu/exec' },
-  { id:'jaune',    name:'Jaune',    initials:'JN', color:'#2979ff', bg:'#e8f0ff', role:'Outreach', pin:'3333', admin:false, api:'https://script.google.com/macros/s/AKfycbyBpQbd0LbztX5irYSYKEhHOsvBFrJM-t_y3Y2sFuu9UCwRXaxfPzLoNg9WYLGSyeE/exec' }
+  { id:'tinus',    name:'Tinus',    initials:'TN', color:'#00b341', bg:'#e6f7ed', role:'Manager',  pin:'1234', admin:true,  api:null },
+  { id:'georgina', name:'Georgina', initials:'GE', color:'#e91e8c', bg:'#fde8f4', role:'Outreach', pin:'2222', admin:false, api:'https://script.google.com/macros/s/AKfycbzVjrkKaJ_XRPnwepbi5nDf6OzSlj3zmE-kj8Yx9nDTnvcenbUuSLAEEyHZeuWxtA0A/exec' },
+  { id:'jaune',    name:'Jaune',    initials:'JN', color:'#2979ff', bg:'#e8f0ff', role:'Outreach', pin:'3333', admin:false, api:'https://script.google.com/macros/s/AKfycby9hfYsYNIt2BSQ9FU_dOviaNgNgbU74H7WuoG3n_DLm3DiC6GiXnWUnJ6wvsY51QgU/exec' }
 ];
+const CH_COLORS=['#0a0a0a','#2979ff','#7c4dff','#e65100','#e91e8c','#00b341','#f9a825'];
+const MO=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+let me=null,activeTab=null,su=null,DATA={},CM={},CHARTS={};
+const U={};
+TEAM.forEach(u=>{U[u.id]=u;DATA[u.id]=null;CM[u.id]=null;});
+CM.total=null;
 
-const CH_COLORS = ['#0a0a0a','#2979ff','#7c4dff','#e65100','#e91e8c','#00b341','#f9a825'];
-const MO = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
-
-let me = null, activeTab = null, su = null, DATA = {}, CM = {}, CHARTS = {};
-const U = {};
-TEAM.forEach(u => { U[u.id] = u; DATA[u.id] = null; CM[u.id] = null; });
-CM.total = null;
-
-// ── Login ─────────────────────────────────────────────────────────────────────
-
-function buildLoginList() {
-  document.getElementById('ulist').innerHTML = TEAM.map(u =>
-    `<button class="ubtn" data-u="${u.id}" onclick="pickU(this)" style="--ac:${u.color}">
-      <div class="uav" style="background:${u.bg};color:${u.color}">${u.initials}</div>
-      <div><div class="un">${u.name}</div><div class="ur">${u.role}</div></div>
-      <div class="uchk">✓</div>
-    </button>`
-  ).join('');
+function buildLoginList(){
+  document.getElementById('ulist').innerHTML=TEAM.map(u=>`<button class="ubtn" data-u="${u.id}" onclick="pickU(this)" style="--ac:${u.color}"><div class="uav" style="background:${u.bg};color:${u.color}">${u.initials}</div><div><div class="un">${u.name}</div><div class="ur">${u.role}</div></div><div class="uchk">✓</div></button>`).join('');
 }
-
-function pickU(b) {
-  document.querySelectorAll('.ubtn').forEach(x => x.classList.remove('on'));
-  b.classList.add('on'); su = b.dataset.u;
+function pickU(b){
+  document.querySelectorAll('.ubtn').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on');su=b.dataset.u;
   document.getElementById('pa').classList.add('show');
-  document.getElementById('le').style.display = 'none';
-  document.getElementById('pi').value = '';
-  setTimeout(() => document.getElementById('pi').focus(), 80);
+  document.getElementById('le').style.display='none';
+  document.getElementById('pi').value='';
+  setTimeout(()=>document.getElementById('pi').focus(),80);
 }
-
-function doLogin() {
-  if (!su) return;
-  const p = document.getElementById('pi').value.trim();
-  if (p === U[su].pin) {
-    me = su;
-    document.getElementById('loginScreen').style.display = 'none';
+function doLogin(){
+  if(!su)return;
+  const p=document.getElementById('pi').value.trim();
+  if(p===U[su].pin){
+    me=su;
+    document.getElementById('loginScreen').style.display='none';
     document.getElementById('app').classList.add('show');
     buildNav();
-    // Admin sees total, outreach staff see only their own tab
-    showTab(U[me].admin ? 'total' : me);
+    showTab(U[me].admin?'total':me);
     fetchForUser();
-  } else {
-    document.getElementById('le').style.display = 'block';
-    document.getElementById('pi').value = '';
+  }else{
+    document.getElementById('le').style.display='block';
+    document.getElementById('pi').value='';
     document.getElementById('pi').focus();
   }
 }
-
-function logout() {
-  me = null; su = null;
-  document.getElementById('loginScreen').style.display = 'flex';
+function logout(){
+  me=null;su=null;
+  document.getElementById('loginScreen').style.display='flex';
   document.getElementById('app').classList.remove('show');
-  document.querySelectorAll('.ubtn').forEach(x => x.classList.remove('on'));
+  document.querySelectorAll('.ubtn').forEach(x=>x.classList.remove('on'));
   document.getElementById('pa').classList.remove('show');
-  killCharts();
-  Object.keys(DATA).forEach(k => DATA[k] = null);
+  killCharts();Object.keys(DATA).forEach(k=>DATA[k]=null);
 }
-
-// ── Nav ───────────────────────────────────────────────────────────────────────
-
-function buildNav() {
-  const u = U[me];
-  const av = document.getElementById('nav-av');
-  av.style.background = u.bg; av.style.color = u.color; av.textContent = u.initials;
-  document.getElementById('nav-nm').textContent = u.name;
-  const nt = document.getElementById('ntabs'); nt.innerHTML = '';
-  if (u.admin) {
-    // Admin: Total tab + all team member tabs
-    mkTab('total', '🏆 Total', '#f9a825');
-    TEAM.forEach(t => mkTab(t.id, t.name, t.color));
-  }
-  // Outreach staff: no tabs shown — they only see their own page
+function buildNav(){
+  const u=U[me];
+  const av=document.getElementById('nav-av');
+  av.style.background=u.bg;av.style.color=u.color;av.textContent=u.initials;
+  document.getElementById('nav-nm').textContent=u.name;
+  const nt=document.getElementById('ntabs');nt.innerHTML='';
+  if(u.admin){mkTab('total','🏆 Total','#f9a825');TEAM.forEach(t=>mkTab(t.id,t.name,t.color));}
 }
-
-function mkTab(id, label, color) {
-  const b = document.createElement('button'); b.className = 'ntab'; b.id = 'nt_' + id;
-  b.innerHTML = `<span class="ndot" style="background:${color}"></span>${label}`;
-  b.onclick = () => showTab(id);
-  document.getElementById('ntabs').appendChild(b);
+function mkTab(id,label,color){
+  const b=document.createElement('button');b.className='ntab';b.id='nt_'+id;
+  b.innerHTML=`<span class="ndot" style="background:${color}"></span>${label}`;
+  b.onclick=()=>showTab(id);document.getElementById('ntabs').appendChild(b);
 }
-
-function showTab(id) {
-  activeTab = id;
-  document.querySelectorAll('.ntab').forEach(t => t.classList.remove('on'));
-  const el = document.getElementById('nt_' + id); if (el) el.classList.add('on');
-  killCharts();
-  id === 'total' ? renderTotal() : renderDash(id);
+function showTab(id){
+  activeTab=id;
+  document.querySelectorAll('.ntab').forEach(t=>t.classList.remove('on'));
+  const el=document.getElementById('nt_'+id);if(el)el.classList.add('on');
+  killCharts();id==='total'?renderTotal():renderDash(id);
 }
-
-// ── Data fetching ─────────────────────────────────────────────────────────────
-// Outreach staff only fetch their own data
-// Admin fetches all team data
-
-async function fetchForUser() {
-  const u = U[me];
-  if (u.admin) {
-    // Admin: fetch all users who have an API
-    await Promise.all(TEAM.filter(t => t.api).map(t => fetchUser(t.id)));
-  } else {
-    // Outreach: only fetch own data
+async function fetchForUser(){
+  if(U[me].admin){
+    await Promise.all(TEAM.filter(t=>t.api).map(t=>fetchUser(t.id)));
+  }else{
     await fetchUser(me);
   }
 }
-
-async function fetchUser(uid) {
-  const u = U[uid]; if (!u.api) return;
-  try {
-    const r = await fetch(u.api, { redirect: 'follow' }); if (!r.ok) return;
-    const raw = await r.json();
-    const months = Object.keys(raw).filter(k => !k.startsWith('__') && MO.includes(k));
-    if (months.length) {
-      const sorted = {};
-      months.sort((a, b) => MO.indexOf(a) - MO.indexOf(b)).forEach(k => sorted[k] = raw[k]);
-      DATA[uid] = sorted;
-      // Default to most recent month with actual data, otherwise last month
-      const withData = months.filter(m => raw[m]?.bigTotal?.sent > 0);
-      CM[uid] = withData.length ? withData[withData.length - 1] : months[months.length - 1];
-      if (activeTab === uid || activeTab === 'total') showTab(activeTab);
+async function fetchUser(uid){
+  const u=U[uid];if(!u.api)return;
+  try{
+    const r=await fetch(u.api,{redirect:'follow'});if(!r.ok)return;
+    const raw=await r.json();
+    const months=Object.keys(raw).filter(k=>!k.startsWith('__')&&MO.includes(k));
+    if(months.length){
+      const sorted={};
+      months.sort((a,b)=>MO.indexOf(a)-MO.indexOf(b)).forEach(k=>sorted[k]=raw[k]);
+      DATA[uid]=sorted;
+      const withData=months.filter(m=>raw[m]?.bigTotal?.sent>0);
+      CM[uid]=withData.length?withData[withData.length-1]:months[months.length-1];
+      if(activeTab===uid||activeTab==='total')showTab(activeTab);
     }
-  } catch(e) { console.log('fetch failed', uid, e.message); }
+  }catch(e){console.log('fail',uid,e.message);}
 }
-
-// ── Render: individual dashboard ──────────────────────────────────────────────
-
-function renderDash(uid) {
-  const u = U[uid], d = DATA[uid], pc = document.getElementById('pc');
-  if (!d) {
-    pc.innerHTML = `<div class="page"><div class="dh"><div><div class="dtitle">${u.name}</div><div class="dsub">Loading data...</div></div></div><div class="loading-wrap"><div class="spinner"></div><div class="loading-txt">Fetching live data from Google Sheets</div></div></div>`;
-    return;
-  }
-  const months = Object.keys(d);
-  if (!CM[uid] || !d[CM[uid]]) CM[uid] = months[months.length - 1];
-  const m = CM[uid], t = calcTotals(d, m), dy = calcDaily(d, m);
-
-  pc.innerHTML = `<div class="page">
+function renderDash(uid){
+  const u=U[uid],d=DATA[uid],pc=document.getElementById('pc');
+  if(!d){pc.innerHTML=`<div class="page"><div class="dh"><div><div class="dtitle">${u.name}</div><div class="dsub">Loading data...</div></div></div><div class="loading-wrap"><div class="spinner"></div><div class="loading-txt">Fetching live data from Google Sheets</div></div></div>`;return;}
+  const months=Object.keys(d);
+  if(!CM[uid]||!d[CM[uid]])CM[uid]=months[months.length-1];
+  const m=CM[uid],t=calcTotals(d,m),dy=calcDaily(d,m);
+  pc.innerHTML=`<div class="page">
     <div class="dh"><div><div class="dtitle">${u.name}</div><div class="dsub">Creator Outreach · Live from Google Sheets</div></div><div class="livebadge"><span class="ldot" style="display:inline-block;margin-right:4px"></span>LIVE</div></div>
-    <div class="mrow">${months.map(mo => `<button class="mbtn${mo===m?' on':''}" onclick="swM('${uid}','${mo}')">${mo}</button>`).join('')}</div>
+    <div class="mrow">${months.map(mo=>`<button class="mbtn${mo===m?' on':''}" onclick="swM('${uid}','${mo}')">${mo}</button>`).join('')}</div>
     <div class="srow">
-      ${sc('DMs SENT', t.sent.toLocaleString(), 'All channels', 'TOTAL', '#e6f7ed', '#00b341', '#00b341')}
-      ${sc('RESPONSES', t.resp, 'Total responses', t.rr+'%', '#e8f0ff', '#2979ff', '#2979ff')}
-      ${sc('CONVERTED', t.conv, 'Signed creators', t.cr+'%', '#fff0e6', '#e65100', '#e65100')}
-      ${sc('RESPONSE RATE', t.rr+'%', 'DMs → Replies', '', '', '', '#0a0a0a')}
-      ${sc('CONVERSION RATE', t.cr+'%', 'Replies → Signed', '', '', '', '#7c4dff')}
+      ${sc('DMs SENT',t.sent.toLocaleString(),'All channels','TOTAL','#e6f7ed','#00b341','#00b341')}
+      ${sc('RESPONSES',t.resp,'Total responses',t.rr+'%','#e8f0ff','#2979ff','#2979ff')}
+      ${sc('CONVERTED',t.conv,'Signed creators',t.cr+'%','#fff0e6','#e65100','#e65100')}
+      ${sc('RESPONSE RATE',t.rr+'%','DMs → Replies','','','','#0a0a0a')}
+      ${sc('CONVERSION RATE',t.cr+'%','Replies → Signed','','','','#7c4dff')}
     </div>
     <div class="mgrid">
       <div class="card"><div class="ctitle">Daily Activity</div><div class="cbox"><canvas id="ch_${uid}"></canvas></div></div>
@@ -309,40 +260,29 @@ function renderDash(uid) {
     </div>
     <div class="card"><div class="ctitle">Converted Creators</div>${renderCreators(d[m].creators||[])}</div>
   </div>`;
-  makeChart('ch_' + uid, dy);
+  makeChart('ch_'+uid,dy);
 }
-
-function swM(uid, m) { CM[uid] = m; renderDash(uid); }
-
-// ── Render: total / admin view ────────────────────────────────────────────────
-
-function renderTotal() {
-  const allMonths = [...new Set(TEAM.flatMap(u => DATA[u.id] ? Object.keys(DATA[u.id]) : []))]
-    .filter(k => MO.includes(k)).sort((a, b) => MO.indexOf(a) - MO.indexOf(b));
-
-  if (!allMonths.length) {
-    document.getElementById('pc').innerHTML = `<div class="page"><div class="dh"><div><div class="dtitle">Total</div><div class="dsub">Loading team data...</div></div></div><div class="loading-wrap"><div class="spinner"></div><div class="loading-txt">Fetching live data from all sheets</div></div></div>`;
-    return;
-  }
-  if (!CM.total || !allMonths.includes(CM.total)) CM.total = allMonths[allMonths.length - 1];
-  const m = CM.total, comb = combineAll(m), dy = combineDaily(m);
-
-  const tcards = TEAM.map(u => {
-    const d = DATA[u.id];
-    if (!d || !d[m]) return `<div class="tcard" onclick="showTab('${u.id}')"><div class="tbar" style="background:${u.color}"></div><div class="tcbody"><div class="tchead"><div class="tcav" style="background:${u.bg};color:${u.color}">${u.initials}</div><div><div class="tcn">${u.name}</div><div class="tcr">${u.role}</div></div></div><div class="nodata">No data yet for ${m}</div></div></div>`;
-    const t = calcTotals(d, m);
-    return `<div class="tcard" onclick="showTab('${u.id}')"><div class="tbar" style="background:${u.color}"></div><div class="tcbody"><div class="tchead"><div class="tcav" style="background:${u.bg};color:${u.color}">${u.initials}</div><div><div class="tcn">${u.name}</div><div class="tcr">${u.role}</div></div></div><div class="mstats"><div class="ms"><div class="msl">Sent</div><div class="msn" style="color:${u.color}">${t.sent.toLocaleString()}</div></div><div class="ms"><div class="msl">Replies</div><div class="msn">${t.resp}</div></div><div class="ms"><div class="msl">Signed</div><div class="msn">${t.conv}</div></div></div></div>`;
+function swM(uid,m){CM[uid]=m;renderDash(uid);}
+function renderTotal(){
+  const allMonths=[...new Set(TEAM.flatMap(u=>DATA[u.id]?Object.keys(DATA[u.id]):[]))].filter(k=>MO.includes(k)).sort((a,b)=>MO.indexOf(a)-MO.indexOf(b));
+  if(!allMonths.length){document.getElementById('pc').innerHTML=`<div class="page"><div class="dh"><div><div class="dtitle">Total</div><div class="dsub">Loading team data...</div></div></div><div class="loading-wrap"><div class="spinner"></div><div class="loading-txt">Fetching live data from all sheets</div></div></div>`;return;}
+  if(!CM.total||!allMonths.includes(CM.total))CM.total=allMonths[allMonths.length-1];
+  const m=CM.total,comb=combineAll(m),dy=combineDaily(m);
+  const tcards=TEAM.map(u=>{
+    const d=DATA[u.id];
+    if(!d||!d[m])return`<div class="tcard" onclick="showTab('${u.id}')"><div class="tbar" style="background:${u.color}"></div><div class="tcbody"><div class="tchead"><div class="tcav" style="background:${u.bg};color:${u.color}">${u.initials}</div><div><div class="tcn">${u.name}</div><div class="tcr">${u.role}</div></div></div><div class="nodata">No data yet for ${m}</div></div></div>`;
+    const t=calcTotals(d,m);
+    return`<div class="tcard" onclick="showTab('${u.id}')"><div class="tbar" style="background:${u.color}"></div><div class="tcbody"><div class="tchead"><div class="tcav" style="background:${u.bg};color:${u.color}">${u.initials}</div><div><div class="tcn">${u.name}</div><div class="tcr">${u.role}</div></div></div><div class="mstats"><div class="ms"><div class="msl">Sent</div><div class="msn" style="color:${u.color}">${t.sent.toLocaleString()}</div></div><div class="ms"><div class="msl">Replies</div><div class="msn">${t.resp}</div></div><div class="ms"><div class="msl">Signed</div><div class="msn">${t.conv}</div></div></div></div>`;
   }).join('');
-
-  document.getElementById('pc').innerHTML = `<div class="page">
+  document.getElementById('pc').innerHTML=`<div class="page">
     <div class="dh"><div><div class="dtitle">Total</div><div class="dsub">All team · ${m}</div></div><div class="livebadge"><span class="ldot" style="display:inline-block;margin-right:4px"></span>LIVE</div></div>
-    <div class="mrow">${allMonths.map(mo => `<button class="mbtn${mo===m?' on':''}" onclick="swT('${mo}')">${mo}</button>`).join('')}</div>
+    <div class="mrow">${allMonths.map(mo=>`<button class="mbtn${mo===m?' on':''}" onclick="swT('${mo}')">${mo}</button>`).join('')}</div>
     <div class="srow">
-      ${sc('TOTAL DMs SENT', comb.sent.toLocaleString(), 'All team · all channels', 'TOTAL', '#fffde7', '#f9a825', '#f9a825')}
-      ${sc('TOTAL RESPONSES', comb.resp, 'Combined responses', comb.rr+'%', '#e8f0ff', '#2979ff', '#2979ff')}
-      ${sc('TOTAL CONVERTED', comb.conv, 'Signed creators', comb.cr+'%', '#fff0e6', '#e65100', '#e65100')}
-      ${sc('RESPONSE RATE', comb.rr+'%', 'DMs → Replies', '', '', '', '#0a0a0a')}
-      ${sc('CONVERSION RATE', comb.cr+'%', 'Replies → Signed', '', '', '', '#7c4dff')}
+      ${sc('TOTAL DMs SENT',comb.sent.toLocaleString(),'All team · all channels','TOTAL','#fffde7','#f9a825','#f9a825')}
+      ${sc('TOTAL RESPONSES',comb.resp,'Combined responses',comb.rr+'%','#e8f0ff','#2979ff','#2979ff')}
+      ${sc('TOTAL CONVERTED',comb.conv,'Signed creators',comb.cr+'%','#fff0e6','#e65100','#e65100')}
+      ${sc('RESPONSE RATE',comb.rr+'%','DMs → Replies','','','','#0a0a0a')}
+      ${sc('CONVERSION RATE',comb.cr+'%','Replies → Signed','','','','#7c4dff')}
     </div>
     <div class="sdiv">Team Overview</div>
     <div class="tcards">${tcards}</div>
@@ -352,161 +292,56 @@ function renderTotal() {
     </div>
     <div class="card"><div class="ctitle">All Converted Creators · ${m}</div>${renderAllCreators(m)}</div>
   </div>`;
-  makeChart('ch_total', dy);
+  makeChart('ch_total',dy);
 }
-
-function swT(m) { CM.total = m; renderTotal(); }
-
-// ── Data calculation ──────────────────────────────────────────────────────────
-
-function calcTotals(d, m) {
-  const mo = d[m];
-  const sent = mo.bigTotal?.sent||0, resp = mo.bigTotal?.resp||0, conv = mo.bigTotal?.conv||0, ch = {};
-  Object.keys(mo.channels||{}).forEach(n => {
-    let s=0,r=0,c=0;
-    (mo.channels[n].weeks||[]).forEach(w => (w.days||[]).forEach(dy => { s+=dy.s||0; r+=dy.r||0; c+=dy.c||0; }));
-    ch[n] = { sent:s, resp:r, conv:c };
-  });
-  return { sent, resp, conv, ch, rr: sent>0?((resp/sent)*100).toFixed(1):'0.0', cr: resp>0?((conv/resp)*100).toFixed(1):'0.0' };
+function swT(m){CM.total=m;renderTotal();}
+function calcTotals(d,m){
+  const mo=d[m];
+  const sent=mo.bigTotal?.sent||0,resp=mo.bigTotal?.resp||0,conv=mo.bigTotal?.conv||0,ch={};
+  Object.keys(mo.channels||{}).forEach(n=>{let s=0,r=0,c=0;(mo.channels[n].weeks||[]).forEach(w=>(w.days||[]).forEach(dy=>{s+=dy.s||0;r+=dy.r||0;c+=dy.c||0;}));ch[n]={sent:s,resp:r,conv:c};});
+  return{sent,resp,conv,ch,rr:sent>0?((resp/sent)*100).toFixed(1):'0.0',cr:resp>0?((conv/resp)*100).toFixed(1):'0.0'};
 }
-
-function calcDaily(d, m) {
-  const dm = {};
-  Object.keys(d[m].channels||{}).forEach(n =>
-    (d[m].channels[n].weeks||[]).forEach(w =>
-      (w.days||[]).forEach(dy => {
-        if (!dm[dy.d]) dm[dy.d] = {s:0,r:0,c:0};
-        dm[dy.d].s += dy.s||0; dm[dy.d].r += dy.r||0; dm[dy.d].c += dy.c||0;
-      })
-    )
-  );
-  const l = Object.keys(dm);
-  return { l, s: l.map(k=>dm[k].s), r: l.map(k=>dm[k].r), c: l.map(k=>dm[k].c) };
+function calcDaily(d,m){
+  const dm={};
+  Object.keys(d[m].channels||{}).forEach(n=>(d[m].channels[n].weeks||[]).forEach(w=>(w.days||[]).forEach(dy=>{if(!dm[dy.d])dm[dy.d]={s:0,r:0,c:0};dm[dy.d].s+=dy.s||0;dm[dy.d].r+=dy.r||0;dm[dy.d].c+=dy.c||0;})));
+  const l=Object.keys(dm);return{l,s:l.map(k=>dm[k].s),r:l.map(k=>dm[k].r),c:l.map(k=>dm[k].c)};
 }
-
-function combineAll(m) {
+function combineAll(m){
   let s=0,r=0,c=0,ch={};
-  TEAM.forEach(u => {
-    const d = DATA[u.id]; if (!d||!d[m]) return;
-    const t = calcTotals(d, m); s+=t.sent; r+=t.resp; c+=t.conv;
-    Object.keys(t.ch).forEach(k => {
-      if (!ch[k]) ch[k] = {sent:0,resp:0,conv:0};
-      ch[k].sent+=t.ch[k].sent; ch[k].resp+=t.ch[k].resp; ch[k].conv+=t.ch[k].conv;
-    });
-  });
-  return { sent:s, resp:r, conv:c, ch, rr: s>0?((r/s)*100).toFixed(1):'0.0', cr: r>0?((c/r)*100).toFixed(1):'0.0' };
+  TEAM.forEach(u=>{const d=DATA[u.id];if(!d||!d[m])return;const t=calcTotals(d,m);s+=t.sent;r+=t.resp;c+=t.conv;Object.keys(t.ch).forEach(k=>{if(!ch[k])ch[k]={sent:0,resp:0,conv:0};ch[k].sent+=t.ch[k].sent;ch[k].resp+=t.ch[k].resp;ch[k].conv+=t.ch[k].conv;});});
+  return{sent:s,resp:r,conv:c,ch,rr:s>0?((r/s)*100).toFixed(1):'0.0',cr:r>0?((c/r)*100).toFixed(1):'0.0'};
 }
-
-function combineDaily(m) {
-  const dm = {};
-  TEAM.forEach(u => {
-    const d = DATA[u.id]; if (!d||!d[m]) return;
-    const dy = calcDaily(d, m);
-    dy.l.forEach((l, i) => {
-      if (!dm[l]) dm[l] = {s:0,r:0,c:0};
-      dm[l].s += dy.s[i]; dm[l].r += dy.r[i]; dm[l].c += dy.c[i];
-    });
-  });
-  const l = Object.keys(dm);
-  return { l, s: l.map(k=>dm[k].s), r: l.map(k=>dm[k].r), c: l.map(k=>dm[k].c) };
+function combineDaily(m){
+  const dm={};
+  TEAM.forEach(u=>{const d=DATA[u.id];if(!d||!d[m])return;const dy=calcDaily(d,m);dy.l.forEach((l,i)=>{if(!dm[l])dm[l]={s:0,r:0,c:0};dm[l].s+=dy.s[i];dm[l].r+=dy.r[i];dm[l].c+=dy.c[i];});});
+  const l=Object.keys(dm);return{l,s:l.map(k=>dm[k].s),r:l.map(k=>dm[k].r),c:l.map(k=>dm[k].c)};
 }
-
-// ── Render helpers ────────────────────────────────────────────────────────────
-
-function sc(lbl, num, sub, tag, tbg, tc, bc) {
-  return `<div class="scard"><div class="stop"><span class="slbl">${lbl}</span>${tag?`<span class="stag" style="background:${tbg};color:${tc}">${tag}</span>`:''}</div><div class="snum">${num}</div><div class="ssub">${sub}</div><div class="sbar" style="background:${bc}"></div></div>`;
+function sc(lbl,num,sub,tag,tbg,tc,bc){return`<div class="scard"><div class="stop"><span class="slbl">${lbl}</span>${tag?`<span class="stag" style="background:${tbg};color:${tc}">${tag}</span>`:''}</div><div class="snum">${num}</div><div class="ssub">${sub}</div><div class="sbar" style="background:${bc}"></div></div>`;}
+function renderChannels(ch){
+  const keys=Object.keys(ch);if(!keys.length)return'<div class="empty">No channel data yet</div>';
+  const mx=Math.max(1,...keys.map(k=>ch[k].sent));
+  return keys.map((n,i)=>{const v=ch[n],p=(v.sent/mx*100).toFixed(0),col=CH_COLORS[i%CH_COLORS.length],rr=v.sent>0?((v.resp/v.sent)*100).toFixed(1):'0';return`<div class="chi"><div class="chitop"><span class="chin">${n}</span><span class="chct" style="color:${col}">${v.sent.toLocaleString()}</span></div><div class="chbt"><div class="chbf" style="width:${p}%;background:${col}"></div></div><div class="chst"><span>${v.resp} responses (${rr}%)</span><span>${v.conv} converted</span></div></div>`;}).join('');
 }
-
-function renderChannels(ch) {
-  const keys = Object.keys(ch);
-  if (!keys.length) return '<div class="empty">No channel data yet</div>';
-  const mx = Math.max(1, ...keys.map(k => ch[k].sent));
-  return keys.map((n, i) => {
-    const v = ch[n], p = (v.sent/mx*100).toFixed(0), col = CH_COLORS[i%CH_COLORS.length], rr = v.sent>0?((v.resp/v.sent)*100).toFixed(1):'0';
-    return `<div class="chi"><div class="chitop"><span class="chin">${n}</span><span class="chct" style="color:${col}">${v.sent.toLocaleString()}</span></div><div class="chbt"><div class="chbf" style="width:${p}%;background:${col}"></div></div><div class="chst"><span>${v.resp} responses (${rr}%)</span><span>${v.conv} converted</span></div></div>`;
-  }).join('');
+function renderWeeks(wt){
+  if(!wt.length)return'<tr><td colspan="7" style="text-align:center;color:#bbb;padding:24px">No weekly data yet</td></tr>';
+  return wt.map((w,i)=>{const rr=w.sent>0?((w.resp/w.sent)*100).toFixed(1):'0.0',cr=w.resp>0?((w.conv/w.resp)*100).toFixed(1):'0.0';return`<tr><td style="font-weight:700">Week ${i+1}</td><td style="color:var(--muted);font-size:12px">${w.dateRange||''}</td><td><span class="tag tg">${w.sent.toLocaleString()}</span></td><td><span class="tag tb">${w.resp}</span></td><td><span class="tag to">${w.conv}</span></td><td style="color:var(--muted)">${rr}%</td><td style="color:var(--muted)">${cr}%</td></tr>`;}).join('');
 }
-
-function renderWeeks(wt) {
-  if (!wt.length) return '<tr><td colspan="7" style="text-align:center;color:#bbb;padding:24px">No weekly data yet</td></tr>';
-  return wt.map((w, i) => {
-    const rr = w.sent>0?((w.resp/w.sent)*100).toFixed(1):'0.0', cr = w.resp>0?((w.conv/w.resp)*100).toFixed(1):'0.0';
-    return `<tr><td style="font-weight:700">Week ${i+1}</td><td style="color:var(--muted);font-size:12px">${w.dateRange||''}</td><td><span class="tag tg">${w.sent.toLocaleString()}</span></td><td><span class="tag tb">${w.resp}</span></td><td><span class="tag to">${w.conv}</span></td><td style="color:var(--muted)">${rr}%</td><td style="color:var(--muted)">${cr}%</td></tr>`;
-  }).join('');
+function badgeCls(s){if(!s)return'bs';s=s.toUpperCase();if(s.includes('ONBOARD')||s.includes('JOINED'))return'bo';if(s.includes('WAIT'))return'bw';if(s.includes('SAMPLE'))return'bsp';if(s.includes('START')||s.includes('REC'))return'bst';return'bs';}
+function renderCreators(list){
+  if(!list.length)return'<div class="empty">No converted creators yet this month</div>';
+  return list.map(c=>`<div class="crow"><div><div class="crn">@${c.name}</div><div class="crl">${c.platform||'Creator'}</div></div><div class="crr">${c.retainer||'—'}</div><div class="crs">${c.health||''}</div><div class="crs">${c.gmv||''}</div><div><span class="badge ${badgeCls(c.status)}">${c.status||'—'}</span></div></div>`).join('');
 }
-
-function badgeCls(s) {
-  if (!s) return 'bs'; s = s.toUpperCase();
-  if (s.includes('ONBOARD')||s.includes('JOINED')) return 'bo';
-  if (s.includes('WAIT')) return 'bw';
-  if (s.includes('SAMPLE')) return 'bsp';
-  if (s.includes('START')||s.includes('REC')) return 'bst';
-  return 'bs';
+function renderAllCreators(m){
+  let all=[];TEAM.forEach(u=>{const d=DATA[u.id];if(!d||!d[m])return;(d[m].creators||[]).forEach(c=>all.push({...c,who:u.name,col:u.color}));});
+  if(!all.length)return'<div class="empty">No converted creators this month</div>';
+  return all.map(c=>`<div class="crow"><div><div class="crn">@${c.name}</div><div class="crl" style="color:${c.col}">${c.who} · ${c.platform||''}</div></div><div class="crr">${c.retainer||'—'}</div><div class="crs">${c.health||''}</div><div class="crs">${c.gmv||''}</div><div><span class="badge ${badgeCls(c.status)}">${c.status||'—'}</span></div></div>`).join('');
 }
-
-function renderCreators(list) {
-  if (!list.length) return '<div class="empty">No converted creators yet this month</div>';
-  const header = `<div class="crow crhdr">
-    <div>HANDLE</div>
-    <div>RETAINER</div>
-    <div>HEALTH</div>
-    <div>GMV</div>
-    <div>STATUS</div>
-  </div>`;
-  return header + list.map(c =>
-    `<div class="crow">
-      <div><div class="crn">@${c.name}</div><div class="crl">${c.platform||'Creator'}</div></div>
-      <div class="crr">${c.retainer||'—'}</div>
-      <div class="crs">${c.health||'—'}</div>
-      <div class="crs">${c.gmv||'—'}</div>
-      <div><span class="badge ${badgeCls(c.status)}">${c.status||'—'}</span></div>
-    </div>`
-  ).join('');
+function makeChart(id,d){
+  const el=document.getElementById(id);if(!el)return;
+  if(CHARTS[id]){try{CHARTS[id].destroy();}catch(e){}}
+  CHARTS[id]=new Chart(el.getContext('2d'),{type:'bar',data:{labels:d.l,datasets:[{label:'DMs Sent',data:d.s,backgroundColor:'#0a0a0a',borderRadius:4,barPercentage:.6},{label:'Responses',data:d.r,backgroundColor:'#2979ff',borderRadius:4,barPercentage:.6},{label:'Converted',data:d.c,backgroundColor:'#e65100',borderRadius:4,barPercentage:.6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#999',font:{family:'DM Sans',size:11},usePointStyle:true,pointStyleWidth:8}}},scales:{x:{ticks:{color:'#bbb',font:{size:9},maxRotation:45},grid:{display:false}},y:{ticks:{color:'#bbb',font:{size:10}},grid:{color:'#f5f5f5'}}}}});
 }
-
-function renderAllCreators(m) {
-  let all = [];
-  TEAM.forEach(u => {
-    const d = DATA[u.id]; if (!d||!d[m]) return;
-    (d[m].creators||[]).forEach(c => all.push({...c, who:u.name, col:u.color}));
-  });
-  if (!all.length) return '<div class="empty">No converted creators this month</div>';
-  const header = `<div class="crow crhdr">
-    <div>HANDLE</div>
-    <div>RETAINER</div>
-    <div>HEALTH</div>
-    <div>GMV</div>
-    <div>STATUS</div>
-  </div>`;
-  return header + all.map(c =>
-    `<div class="crow">
-      <div><div class="crn">@${c.name}</div><div class="crl" style="color:${c.col}">${c.who} · ${c.platform||''}</div></div>
-      <div class="crr">${c.retainer||'—'}</div>
-      <div class="crs">${c.health||'—'}</div>
-      <div class="crs">${c.gmv||'—'}</div>
-      <div><span class="badge ${badgeCls(c.status)}">${c.status||'—'}</span></div>
-    </div>`
-  ).join('');
-}
-
-function makeChart(id, d) {
-  const el = document.getElementById(id); if (!el) return;
-  if (CHARTS[id]) { try { CHARTS[id].destroy(); } catch(e) {} }
-  CHARTS[id] = new Chart(el.getContext('2d'), {
-    type:'bar',
-    data:{ labels:d.l, datasets:[
-      { label:'DMs Sent',   data:d.s, backgroundColor:'#0a0a0a', borderRadius:4, barPercentage:.6 },
-      { label:'Responses',  data:d.r, backgroundColor:'#2979ff', borderRadius:4, barPercentage:.6 },
-      { label:'Converted',  data:d.c, backgroundColor:'#e65100', borderRadius:4, barPercentage:.6 }
-    ]},
-    options:{ responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{ labels:{ color:'#999', font:{ family:'DM Sans', size:11 }, usePointStyle:true, pointStyleWidth:8 }}},
-      scales:{ x:{ ticks:{ color:'#bbb', font:{ size:9 }, maxRotation:45 }, grid:{ display:false }}, y:{ ticks:{ color:'#bbb', font:{ size:10 }}, grid:{ color:'#f5f5f5' }}}}
-  });
-}
-
-function killCharts() { Object.values(CHARTS).forEach(c => { try { c.destroy(); } catch(e) {} }); CHARTS = {}; }
-
+function killCharts(){Object.values(CHARTS).forEach(c=>{try{c.destroy();}catch(e){}});CHARTS={};}
 buildLoginList();
 </script>
 </body>
